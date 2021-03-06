@@ -1,0 +1,14 @@
+[package]
+name = "multitouch"
+version = "0.1.0"
+authors = ["Daniel Tang <danielzgtg.opensource@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ctrlc = { version = "3.1.8", features = ["termination"] }
+engine = { path = "../engine" }
+ipts-dev = { path = "../ipts-dev" }
+mtinput = { path = "../mtinput" }
+utils = { path = "../utils" }

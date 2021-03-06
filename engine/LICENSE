@@ -1,0 +1,1 @@
+Any file that has an ancestor directory with a name containing the substring (case-insensitive) "shader" is licensed under GPL-2.0-or-later. The rest is licensed under MIT.

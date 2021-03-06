@@ -1,0 +1,1 @@
+There can be an optional blur stage but it's currently useless and unimplemented.
