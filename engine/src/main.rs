@@ -13,17 +13,17 @@ fn main() {
 
     let mut engine = Engine::new();
     std::thread::sleep(std::time::Duration::from_secs(1));
+    engine.run(data, &mut positions);
     let start = Instant::now();
     engine.run(data, &mut positions);
-    println!("Elapsed: {:?}", Instant::now() - start);
-    println!("{:?}", positions);
-    std::thread::sleep(std::time::Duration::from_secs(1));
-    let start = Instant::now();
     engine.run(data, &mut positions);
-    println!("Elapsed: {:?}", Instant::now() - start);
-    println!("{:?}", positions);
-    std::thread::sleep(std::time::Duration::from_secs(1));
-    let start = Instant::now();
+    engine.run(data, &mut positions);
+    engine.run(data, &mut positions);
+    engine.run(data, &mut positions);
+    engine.run(data, &mut positions);
+    engine.run(data, &mut positions);
+    engine.run(data, &mut positions);
+    engine.run(data, &mut positions);
     engine.run(data, &mut positions);
     println!("Elapsed: {:?}", Instant::now() - start);
     println!("{:?}", positions);

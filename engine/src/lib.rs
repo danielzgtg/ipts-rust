@@ -152,7 +152,7 @@ impl Engine {
                 [1, 1, 1], s38,
             );
         })
-            .execute( self.queue.clone()).unwrap()
+            .execute(self.queue.clone()).unwrap()
             .then_signal_fence_and_flush().unwrap()
             .wait(None).unwrap();
 

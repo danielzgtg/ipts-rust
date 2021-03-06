@@ -62,10 +62,12 @@ impl Ipts {
     }
 
     fn wait_for_device(&self) {
-        for _ in 0..5 {
-            if self.ready() { break; }
-            std::thread::sleep(std::time::Duration::from_millis(1));
-        }
+        // Disabled because it is causing touch lag
+        // TODO Is disabling this safe?
+        // for _ in 0..5 {
+        //     if self.ready() { break; }
+        //     std::thread::sleep(std::time::Duration::from_millis(1));
+        // }
     }
 
     pub fn send_feedback(&mut self) {
