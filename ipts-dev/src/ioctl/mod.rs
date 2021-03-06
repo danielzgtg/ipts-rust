@@ -18,7 +18,7 @@ pub fn get_device_ready(f: &File) -> bool {
     unsafe {
         raw::get_device_ready(f.as_raw_fd(), &mut result).unwrap();
     }
-    result == 0
+    result != 0
 }
 
 pub fn get_device_info(f: &File) -> DeviceInfo {
