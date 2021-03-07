@@ -105,6 +105,7 @@ impl Engine {
             // Disabled the lowpass because it doesn't like when I press my screen lightly
             // Also, the hardware already seems to be doing something similar
             builder.copy_buffer(self.buffers.c.clone(), self.buffers.b.clone()).unwrap();
+            // TODO Benchmark whether things are better with a local size of 32
             stage!(
                 self, builder,
                 [1, 44, 1], s30,
