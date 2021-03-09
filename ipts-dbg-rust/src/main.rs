@@ -22,7 +22,7 @@ fn main() {
     println!();
 
     while running.load(Ordering::Acquire) {
-        ipts.wait_for_doorbell();
+        ipts.wait_for_doorbell(false);
         ipts.read(&mut buf);
 
         let parsed = HeaderAndBuffer::from(&buf);

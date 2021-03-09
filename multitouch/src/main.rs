@@ -6,6 +6,7 @@ use ipts_dev::{HeaderAndBuffer, Ipts};
 use mtinput::MtInput;
 use utils::{Pointers, get_heatmap};
 use engine::Engine;
+use std::time::{Instant, Duration};
 
 fn main() {
     let running = Arc::new(AtomicBool::new(true));
@@ -23,8 +24,9 @@ fn main() {
     let mut positions: [(u32, u32); 10] = [(0, 0); 10];
     let mut engine = Engine::new();
 
+    let mut last_multitouch = Instant::now();
     while running.load(Ordering::Acquire) {
-        ipts.wait_for_doorbell();
+        ipts.wait_for_doorbell(Instant::now() - last_multitouch < Duration::from_secs(1));
         ipts.read(&mut buf);
 
         let parsed = HeaderAndBuffer::from(&buf);
@@ -33,6 +35,7 @@ fn main() {
             let length = engine.run(data, &mut positions);
             pointers.update(positions, length);
             mt.dispatch(&mut pointers);
+            last_multitouch = Instant::now();
         }
 
         ipts.send_feedback();

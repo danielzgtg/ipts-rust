@@ -102,11 +102,13 @@ impl Ipts {
         new
     }
 
-    pub fn wait_for_doorbell(&mut self) {
+    pub fn wait_for_doorbell(&mut self, eager: bool) {
+        let mut backoff = if eager { 15 } else { 0 };
         while {
             self.doorbell() <= self.current_doorbell
         } {
-            std::thread::sleep(std::time::Duration::from_millis(1));
+            std::thread::sleep(std::time::Duration::from_millis(16 - backoff));
+            backoff = backoff.saturating_sub(1);
         }
     }
 

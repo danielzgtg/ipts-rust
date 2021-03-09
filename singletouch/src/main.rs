@@ -5,6 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use ipts_dev::{HeaderAndBuffer, Ipts};
 use mtinput::MtInput;
 use utils::Pointers;
+use std::time::{Instant, Duration};
 
 fn main() {
     let running = Arc::new(AtomicBool::new(true));
@@ -21,9 +22,10 @@ fn main() {
     let mut mt = MtInput::new();
     let mut positions: [(u32, u32); 10] = [(0, 0); 10];
 
+    let mut last_singletouch = Instant::now();
     while running.load(Ordering::Acquire) {
-        ipts.wait_for_doorbell();
-        ipts.read_and_send_feedback(&mut buf);
+        ipts.wait_for_doorbell(Instant::now() - last_singletouch < Duration::from_secs(1));
+        ipts.read(&mut buf);
 
         let parsed = HeaderAndBuffer::from(&buf);
         if parsed.typ == 3 && parsed.size == 6 && parsed.data[0] == 0x40 {
@@ -38,6 +40,9 @@ fn main() {
                 pointers.update(positions, 1);
             }
             mt.dispatch(&mut pointers);
+            last_singletouch = Instant::now();
         }
+
+        ipts.send_feedback()
     }
 }
