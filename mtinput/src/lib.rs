@@ -4,7 +4,7 @@ use uinput::event::absolute::Multi::{PositionX, PositionY, Slot, TrackingId};
 use uinput::event::controller::Controller::Digi;
 use uinput::event::controller::Digi::Touch;
 use uinput::event::Event::{Absolute, Controller};
-use utils::{Pointers, Report};
+use utils::{Report, Counter};
 
 pub struct MtInput {
     device: Device,
@@ -31,8 +31,7 @@ impl MtInput {
         }
     }
 
-    pub fn dispatch(&mut self, pointers: &mut Pointers) {
-        let (events, counter) = pointers.events_and_counter();
+    pub fn dispatch(&mut self, events: &[Report; 10], counter: &mut Counter) {
         for (i, e) in events.iter().enumerate() {
             if *e == Report::None { continue; }
             self.device.send(Slot, i as i32).unwrap();

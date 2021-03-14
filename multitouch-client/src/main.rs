@@ -1,12 +1,13 @@
 use std::convert::TryInto;
+use std::io::Write;
+use std::net::TcpStream;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 
-use ipts_dev::{HeaderAndBuffer, Ipts};
-use mtinput::MtInput;
-use utils::{Pointers, get_heatmap};
 use engine::Engine;
-use std::time::{Instant, Duration};
+use ipts_dev::{HeaderAndBuffer, Ipts};
+use utils::{get_heatmap, Pointers, serialize_reports};
 
 fn main() {
     let running = Arc::new(AtomicBool::new(true));
@@ -20,9 +21,13 @@ fn main() {
     let mut buf = [0u8; 16384];
 
     let mut pointers = Pointers::new();
-    let mut mt = MtInput::new();
     let mut positions: [(u32, u32); 10] = [(0, 0); 10];
     let mut engine = Engine::new();
+
+    let mut stream = TcpStream::connect("127.0.0.1:34254").unwrap();
+    stream.set_nodelay(true).unwrap();
+    stream.set_nonblocking(true).unwrap();
+    let mut out_buf = [0u8; 98];
 
     let mut last_multitouch = Instant::now();
     while running.load(Ordering::Acquire) {
@@ -34,8 +39,8 @@ fn main() {
             let data = get_heatmap((&parsed.data[..3500]).try_into().unwrap());
             let length = engine.run(data, &mut positions);
             pointers.update(positions, length);
-            let (events, counter) = pointers.events_and_counter();
-            mt.dispatch(events, counter);
+            serialize_reports(pointers.events(), &mut out_buf);
+            stream.write(&out_buf).unwrap();
             last_multitouch = Instant::now();
         }
 

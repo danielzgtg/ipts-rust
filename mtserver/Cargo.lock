@@ -65,9 +65,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.87"
+version = "0.2.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "265d751d31d6780a3f956bb5b8022feba2d94eeee5a84ba64f4212eedca42213"
+checksum = "03b07a082330a35e43f63177cc01689da34fbffa0105e1246cf0311472cac73a"
 
 [[package]]
 name = "libudev"
@@ -98,6 +98,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mtserver"
+version = "0.1.0"
+dependencies = [
+ "mtinput",
+ "utils",
+]
+
+[[package]]
 name = "nix"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -116,14 +124,6 @@ name = "pkg-config"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3831453b3449ceb48b6d9c7ad7c96d5ea673e9b470a1dc578c2ce6521230884c"
-
-[[package]]
-name = "scroll-test"
-version = "0.1.0"
-dependencies = [
- "mtinput",
- "utils",
-]
 
 [[package]]
 name = "uinput"

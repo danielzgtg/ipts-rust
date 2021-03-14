@@ -7,6 +7,10 @@ pub enum Report {
     Move((u32, u32)),
 }
 
+mod network;
+
+pub use network::{serialize_reports, deserialize_reports};
+
 #[derive(Default)]
 pub struct Counter {
     count: i32,

@@ -10,6 +10,7 @@ fn main() {
         std::thread::sleep(std::time::Duration::from_millis(10));
         positions[0] = (1000, 300 + y);
         pointers.update(positions, 1);
-        mt.dispatch(&mut pointers);
+        let (events, counter) = pointers.events_and_counter();
+        mt.dispatch(events, counter);
     }
 }
