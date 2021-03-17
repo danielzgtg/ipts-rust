@@ -29,17 +29,10 @@ pub struct Pointers {
     positions: [(u32, u32); 10],
     positions_length: usize,
     mappings: [usize; 10],
-    frictions: [u8; 10],
     events: [Report; 10],
 }
 
 const DETACH_THRESHOLD: u32 = 10000;
-const FRICTION_THRESHOLD: u32 = 300;
-const FRICTION_DECREASE_THRESHOLD: u32 = 20;
-const FRICTION_INCREASE_THRESHOLD: u32 = 10;
-const FRICTION_DELAY: u8 = 20;
-const MAX_FRICTION_DELAY: u8 = 30;
-const FRICTION_DECREASE_RATE: u8 = 3;
 
 impl Pointers {
     pub fn new() -> Pointers {
@@ -48,7 +41,6 @@ impl Pointers {
             positions: [(0, 0); 10],
             positions_length: 0,
             mappings: [0; 10],
-            frictions: [0; 10],
             events: [Report::None; 10],
         }
     }
@@ -120,19 +112,28 @@ impl Pointers {
             let new_i = min_new - 1;
             mappings[new_i] = mapped;
             let mut pos = new[new_i];
-            if min_dist < FRICTION_THRESHOLD {
-                let friction = &mut self.frictions[mapped];
-                if *friction > FRICTION_DELAY {
-                    pos = old[old_i];
-                } else if min_dist < FRICTION_INCREASE_THRESHOLD {
-                    *friction = (*friction + 1).min(MAX_FRICTION_DELAY);
-                } else if min_dist > FRICTION_DECREASE_THRESHOLD {
-                     if let Some(x) = friction.checked_sub(FRICTION_DECREASE_RATE) {
-                         *friction = x;
-                     }
+            let old_pos = old[old_i];
+            // Ignore anything less than 16 units away
+            if min_dist > 256 {
+                fn isqrt(num: i32) -> i32 {
+                    let mut result = 3;
+                    let mut square = 9;
+                    while square < num {
+                        result += 1;
+                        square += result - 1;
+                    }
+                    result
                 }
+
+                let dx = pos.0 as i32 - old_pos.0 as i32;
+                let dy = pos.1 as i32 - old_pos.1 as i32;
+                let norm = isqrt((dx * dx) + (dy * dy));
+                let dx_clip = (dx * 16) / norm;
+                let dy_clip = (dy * 16) / norm;
+                pos.0 = (pos.0 as i32 - dx_clip) as u32;
+                pos.1 = (pos.1 as i32 - dy_clip) as u32;
             } else {
-                self.frictions[mapped] = 0;
+                pos = old_pos;
             }
             new[new_i] = pos;
             // TODO Further smooth out the jitter
@@ -158,7 +159,6 @@ impl Pointers {
                         _ => false,
                     })
                     .unwrap();
-                self.frictions[i] = 255;
                 *e = match e {
                     Report::None => Report::Down(pos),
                     Report::Up => Report::UpDown(pos),
