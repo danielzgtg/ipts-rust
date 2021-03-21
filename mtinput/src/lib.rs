@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use uinput::Device;
 use uinput::event::absolute::Absolute::Multi;
 use uinput::event::absolute::Multi::{PositionX, PositionY, Slot, TrackingId};
@@ -6,12 +8,19 @@ use uinput::event::controller::Digi::Touch;
 use uinput::event::Event::{Absolute, Controller};
 use utils::{Report, Counter};
 
+fn check_warn_libinput() {
+    if !Path::new("/usr/lib/xorg/modules/input/libinput_drv.so").exists() {
+        eprintln!("You might need to install xserver-xorg-input-libinput");
+    }
+}
+
 pub struct MtInput {
     device: Device,
 }
 
 impl MtInput {
     pub fn new() -> MtInput {
+        check_warn_libinput();
         MtInput {
             device: uinput::default().unwrap()
                 .name("IPTS Touch").unwrap()
