@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBuffer};
 use vulkano::device::{Device, DeviceExtensions, Features, Queue};
-use vulkano::instance::{Instance, InstanceExtensions, PhysicalDevice};
+use vulkano::instance::{Instance, InstanceExtensions, PhysicalDevice, PhysicalDeviceType};
 use vulkano::sync::GpuFuture;
 
 use bind_sets::BindSets;
@@ -24,7 +24,7 @@ pub struct Engine {
 }
 
 macro_rules! command {
-    ($engine: expr, $builder: ident, $inner: tt) => {
+    ($engine: expr, $future: expr, $builder: ident, $inner: tt) => {
         {
             let mut $builder = AutoCommandBufferBuilder::primary_one_time_submit(
                 $engine.device.clone(),
@@ -32,20 +32,36 @@ macro_rules! command {
             ).unwrap();
             $inner(&mut $builder);
             $builder
-        }.build().unwrap()
+                .build().unwrap()
+                .execute($engine.queue.clone()).unwrap()
+                .then_signal_fence_and_flush().unwrap().wait(None).unwrap();
+        }
     };
 }
 
-macro_rules! stage {
-    ($engine: expr, $builder: expr, $($count: expr, $id: ident),* $(,)?) => {
+macro_rules! dispatch {
+    ($engine: expr, $builder: expr, $($count: expr, $id: ident),+ $(,)?) => {
         $(
             $builder.dispatch(
                 $count,
                 $engine.pipelines.$id.clone(),
                 $engine.bind_sets.$id.clone(),
                 (),
+                std::iter::empty(),
             ).unwrap();
-        )*
+        )+
+    }
+}
+
+macro_rules! upload_buf {
+    ($engine: expr, $builder: expr, $id: ident, $data: expr) => {
+        $builder.update_buffer($engine.buffers.$id.clone(), Box::new($data)).unwrap();
+    }
+}
+
+macro_rules! zero_buf {
+    ($engine: expr, $builder: expr, $id: ident) => {
+        $builder.fill_buffer($engine.buffers.$id.clone(), 0u32).unwrap();
     }
 }
 
@@ -61,8 +77,10 @@ impl Engine {
         }
 
         let physical = get_only(PhysicalDevice::enumerate(&vk)
-            .filter(|x| x.name() == "Intel(R) Iris(R) Plus Graphics (ICL GT2)"));
-        let family = get_only(physical.queue_families());
+            .filter(|x| x.name() == "Intel(R) Iris(R) Plus Graphics (ICL GT2)")
+        );
+        let family = get_only(physical.queue_families()
+            .filter(|x| x.supports_graphics() && x.supports_compute()));
         let (device, queues) = {
             Device::new(
                 physical,
@@ -92,22 +110,14 @@ impl Engine {
     }
 
     pub fn run(&mut self, data: &[u8; 2816], results: &mut [(u32, u32); 10]) -> usize {
-        command!(self, builder, {
-            builder.update_buffer(self.buffers.r.clone(), *data).unwrap();
-            stage!(
-                self, builder,
+        command!(self, cmd, builder, {
+            upload_buf!(self, builder, r, *data);
+            dispatch!(self, builder,
                 [1, 44, 1], s00,
                 [1, 44, 1], s01,
-                // [1, 44, 1], s10,
-                // [1, 44, 1], s11,
-                // [1, 44, 1], s12,
             );
-            // Disabled the lowpass because it doesn't like when I press my screen lightly
-            // Also, the hardware already seems to be doing something similar
-            builder.copy_buffer(self.buffers.c.clone(), self.buffers.b.clone()).unwrap();
             // TODO Benchmark whether things are better with a local size of 32
-            stage!(
-                self, builder,
+            dispatch!(self, builder,
                 [1, 44, 1], s30,
                 [1, 44, 1], s31a,
                 [1, 44, 1], s31b,
@@ -124,10 +134,7 @@ impl Engine {
                 [1, 44, 1], s33,
                 [16, 1, 1], s34,
             );
-        })
-            .execute(self.queue.clone()).unwrap()
-            .then_signal_fence_and_flush().unwrap()
-            .wait(None).unwrap();
+        });
 
         let count;
         let starts = {
@@ -143,19 +150,15 @@ impl Engine {
             starts
         };
 
-        command!(self, builder, {
-            builder.update_buffer(self.buffers.i.clone(), starts).unwrap();
-            stage!(self, builder, [1, 44, 1], s35);
-            builder.fill_buffer(self.buffers.t.clone(), 0u32).unwrap();
-            stage!(
-                self, builder,
+        command!(self, cmd, builder, {
+            upload_buf!(self, builder, i, starts);
+            dispatch!(self, builder, [1, 44, 1], s35);
+            zero_buf!(self, builder, t);
+            dispatch!(self, builder,
                 [1, 10, 1], s37,
                 [1, 1, 1], s38,
             );
-        })
-            .execute(self.queue.clone()).unwrap()
-            .then_signal_fence_and_flush().unwrap()
-            .wait(None).unwrap();
+        });
 
         for (i, packed) in self.buffers.p.read().unwrap().iter().enumerate() {
             let x = packed >> 16;
@@ -166,4 +169,3 @@ impl Engine {
         count
     }
 }
-

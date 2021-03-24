@@ -8,5 +8,6 @@ edition = "2018"
 
 [dependencies]
 utils.path = "../utils"
-vulkano = "0.20.0"
-vulkano-shaders = "0.20.0"
+# TODO switch to 0.22.0 once my barrier PR is merged
+vulkano.path = "../../vulkano/vulkano"
+vulkano-shaders.path = "../../vulkano/vulkano-shaders"

@@ -18,10 +18,6 @@ macro_rules! bind_set {
     };
 }
 
-type BindSet1<A> = Arc<PersistentDescriptorSet<
-    ((),
-     PersistentDescriptorSetBuf<A>),
-    StdDescriptorPoolAlloc>>;
 type BindSet2<A, B> = Arc<PersistentDescriptorSet<
     (((),
       PersistentDescriptorSetBuf<A>),
@@ -37,10 +33,7 @@ type BindSet3<A, B, C> = Arc<PersistentDescriptorSet<
 pub struct BindSets {
     pub s00: BindSet2<BufferR, BufferA>,
     pub s01: BindSet2<BufferA, BufferC>,
-    pub s10: BindSet2<BufferC, BufferB>,
-    pub s11: BindSet2<BufferB, BufferA>,
-    pub s12: BindSet3<BufferA, BufferC, BufferB>,
-    pub s30: BindSet1<BufferB>,
+    pub s30: BindSet2<BufferC, BufferB>,
     pub s31a: BindSet2<BufferB, BufferA>,
     pub s31b: BindSet2<BufferA, BufferB>,
     pub s32: BindSet2<BufferA, BufferB>,
@@ -56,10 +49,7 @@ impl BindSets {
         BindSets {
             s00: bind_set!(pipelines.s00, buffers.r, buffers.a),
             s01: bind_set!(pipelines.s01, buffers.a, buffers.c),
-            s10: bind_set!(pipelines.s10, buffers.c, buffers.b),
-            s11: bind_set!(pipelines.s11, buffers.b, buffers.a),
-            s12: bind_set!(pipelines.s12, buffers.a, buffers.c, buffers.b),
-            s30: bind_set!(pipelines.s30, buffers.b),
+            s30: bind_set!(pipelines.s30, buffers.c, buffers.b),
             s31a: bind_set!(pipelines.s31a, buffers.b, buffers.a),
             s31b: bind_set!(pipelines.s31b, buffers.a, buffers.b),
             s32: bind_set!(pipelines.s32, buffers.a, buffers.b),

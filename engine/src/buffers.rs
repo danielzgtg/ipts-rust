@@ -52,19 +52,8 @@ impl Buffers {
         Buffers {
             r: cpu_gpu_buffer!(device, [0u8; 2816]),
             a: gpu_buffer!(device, family),
-            // b: gpu_buffer!(device, family),
-            // c: gpu_buffer!(device, family),
-            // Enabled copy because I disabled lowpass
-            b: DeviceLocalBuffer::new(device.clone(), BufferUsage {
-                transfer_destination: true,
-                storage_buffer: true,
-                ..BufferUsage::none()
-            }, std::iter::once(family)).unwrap(),
-            c: DeviceLocalBuffer::new(device.clone(), BufferUsage {
-                transfer_source: true,
-                storage_buffer: true,
-                ..BufferUsage::none()
-            }, std::iter::once(family)).unwrap(),
+            b: gpu_buffer!(device, family),
+            c: gpu_buffer!(device, family),
             i: cpu_gpu_buffer!(device, [0u32; 10]),
             t: DeviceLocalBuffer::new(device.clone(), BufferUsage {
                 transfer_destination: true,

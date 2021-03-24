@@ -1,0 +1,2 @@
+Removed the lowpass because it doesn't like when I press my screen lightly
+Also, the hardware already seems to be doing something similar

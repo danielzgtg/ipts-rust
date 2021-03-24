@@ -19,7 +19,7 @@ void main() {
     result |= uint(b[x][y] != 0u);
     result <<= 8u;
     x -= 1u;
-    result |= uint(b[x][y] != 0);
+    result |= uint(b[x][y] != 0u);
     result <<= 8u;
     x -= 1u;
     result |= uint(b[x][y] != 0u);
