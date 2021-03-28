@@ -1,1 +1,4 @@
-Each submodule has its own license. If unspecified, it shall be GPL-2.0-or-later.
+Each submodule has its own license.
+Prebuilt binaries are GPL3.
+If unspecified, it shall be GPL-2.0-or-later.
+Do note that those are the licenses of the individual components, and the choice of licenses to distribute the combination may be more limited.

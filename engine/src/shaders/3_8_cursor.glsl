@@ -23,7 +23,7 @@ void main() {
         w_sum += w;
     }
     float w_float = float(w_sum);
-    uint screen_x = uint(float(x_sum) * 43.42857142857143f  / w_float);
-    uint screen_y = uint(float(y_sum) * 42.41860465116279f / w_sum);
+    uint screen_x = uint((float(x_sum) * 43.42857142857143f  / w_float));
+    uint screen_y = uint((float(y_sum) * 42.41860465116279f / w_sum));
     p[z >> 1u] = (screen_x << 16u) | screen_y;
 }

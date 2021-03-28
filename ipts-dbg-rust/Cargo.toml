@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 ctrlc = { version = "3.1.8", features = ["termination"] }
-ipts-dev = { path = "../ipts-dev" }
+ipts-dev.path = "../ipts-dev"

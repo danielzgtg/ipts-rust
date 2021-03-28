@@ -22,7 +22,7 @@ fn main() {
     let mut pointers = Pointers::new();
     let mut mt = MtInput::new();
     let mut positions: [(u32, u32); 10] = [(0, 0); 10];
-    let mut engine = Engine::new();
+    let mut engine = Engine::new(true);
 
     let mut last_multitouch = Instant::now();
     while running.load(Ordering::Acquire) {

@@ -22,9 +22,9 @@ fn main() {
 
     let mut pointers = Pointers::new();
     let mut positions: [(u32, u32); 10] = [(0, 0); 10];
-    let mut engine = Engine::new();
+    let mut engine = Engine::new(true);
 
-    let mut stream = TcpStream::connect("127.0.0.1:34254").unwrap();
+    let mut stream = TcpStream::connect("192.168.3.150:34254").unwrap();
     stream.set_nodelay(true).unwrap();
     stream.set_nonblocking(true).unwrap();
     let mut out_buf = [0u8; 98];

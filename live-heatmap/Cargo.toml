@@ -1,0 +1,17 @@
+[package]
+name = "live-heatmap"
+version = "0.1.0"
+authors = ["Daniel Tang <danielzgtg.opensource@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+engine = { path = "../engine" }
+ipts-dev = { path = "../ipts-dev" }
+utils.path = "../utils"
+# TODO switch to 0.22.0 once my barrier PR is merged
+vulkano.path = "../../vulkano/vulkano"
+vulkano-shaders.path = "../../vulkano/vulkano-shaders"
+vulkano-win.path = "../../vulkano/vulkano-win"
+winit = "0.24.0"

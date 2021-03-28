@@ -3,11 +3,9 @@ use std::sync::Arc;
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer, DeviceLocalBuffer};
 use vulkano::device::Device;
 use vulkano::instance::QueueFamily;
-use vulkano::memory::pool::{PotentialDedicatedAllocation, StdMemoryPoolAlloc};
 
-type AllocStuff = PotentialDedicatedAllocation<StdMemoryPoolAlloc>;
-type CpuGpuBuffer<T> = Arc<CpuAccessibleBuffer<T, AllocStuff>>;
-type GpuBuffer<T> = Arc<DeviceLocalBuffer<T, AllocStuff>>;
+type CpuGpuBuffer<T> = Arc<CpuAccessibleBuffer<T>>;
+type GpuBuffer<T> = Arc<DeviceLocalBuffer<T>>;
 
 pub type BufferR = CpuGpuBuffer<[u8; 2816]>;
 pub type BufferA = GpuBuffer<[u32; 2816]>;

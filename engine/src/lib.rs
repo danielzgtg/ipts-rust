@@ -15,6 +15,7 @@ mod buffers;
 mod bind_sets;
 
 pub struct Engine {
+    vk: Arc<Instance>,
     device: Arc<Device>,
     queue: Arc<Queue>,
     _shaders: Shaders,
@@ -65,9 +66,29 @@ macro_rules! zero_buf {
     }
 }
 
+const HEADLESS_INSTANCE_EXTENSIONS: InstanceExtensions = InstanceExtensions::none();
+const INSTANCE_EXTENSIONS: InstanceExtensions = InstanceExtensions {
+    khr_surface: true,
+    khr_xcb_surface: true,
+    ..HEADLESS_INSTANCE_EXTENSIONS
+};
+
+const HEADLESS_DEVICE_EXTENSIONS: DeviceExtensions = DeviceExtensions {
+    khr_storage_buffer_storage_class: true,
+    ..DeviceExtensions::none()
+};
+const DEVICE_EXTENSIONS: DeviceExtensions = DeviceExtensions {
+    khr_swapchain: true,
+    ..HEADLESS_DEVICE_EXTENSIONS
+};
+
 impl Engine {
-    pub fn new() -> Engine {
-        let vk = Instance::new(None, &InstanceExtensions::none(), None).unwrap();
+    pub fn new(headless: bool) -> Engine {
+        let vk = Instance::new(None, &if headless {
+            HEADLESS_INSTANCE_EXTENSIONS
+        } else {
+            INSTANCE_EXTENSIONS
+        }, None).unwrap();
 
         #[inline]
         fn get_only<T>(mut iter: impl Iterator<Item = T>) -> T {
@@ -77,7 +98,8 @@ impl Engine {
         }
 
         let physical = get_only(PhysicalDevice::enumerate(&vk)
-            .filter(|x| x.name() == "Intel(R) Iris(R) Plus Graphics (ICL GT2)")
+            // .filter(|x| x.name() == "Intel(R) Iris(R) Plus Graphics (ICL GT2)")
+            .filter(|x| x.ty() != PhysicalDeviceType::Cpu)
         );
         let family = get_only(physical.queue_families()
             .filter(|x| x.supports_graphics() && x.supports_compute()));
@@ -85,10 +107,7 @@ impl Engine {
             Device::new(
                 physical,
                 &Features::none(),
-                &DeviceExtensions {
-                    khr_storage_buffer_storage_class: true,
-                    ..DeviceExtensions::none()
-                },
+                &if headless { HEADLESS_DEVICE_EXTENSIONS } else { DEVICE_EXTENSIONS },
                 [(family, 1.0)].iter().cloned(),
             ).unwrap()
         };
@@ -100,6 +119,7 @@ impl Engine {
         let bind_sets = BindSets::new(&pipelines, &buffers);
 
         Engine {
+            vk,
             device,
             queue,
             _shaders: shaders,
@@ -107,6 +127,22 @@ impl Engine {
             buffers,
             bind_sets,
         }
+    }
+
+    pub fn vk(&self) -> Arc<Instance> {
+        self.vk.clone()
+    }
+
+    pub fn device(&self) -> Arc<Device> {
+        self.device.clone()
+    }
+
+    pub fn queue(&self) -> Arc<Queue> {
+        self.queue.clone()
+    }
+
+    pub fn get_parsed_buffer(&self) -> buffers::BufferC {
+        self.buffers.c.clone()
     }
 
     pub fn run(&mut self, data: &[u8; 2816], results: &mut [(u32, u32); 10]) -> usize {
@@ -138,7 +174,7 @@ impl Engine {
 
         let count;
         let starts = {
-            let mut starts = [0u32; 10];
+            let mut starts = [!0u32; 10];
             let results: Vec<u32> = self.buffers.r.read().unwrap().iter()
                 .enumerate().filter(|x| *x.1 != 0).map(|x| x.0 as u32).take(11).collect();
             if results.len() == 11 {

@@ -18,7 +18,7 @@ void main() {
     uint x = gl_GlobalInvocationID.x;
     uint y = gl_GlobalInvocationID.y;
     uint me = a[x][y];
-    if (me == 0u) return;
+    if (me == ~0u) return;
 
     me -= 1u;
     uint m_x = me & 63u;

@@ -11,7 +11,7 @@ fn main() {
     let data = get_heatmap(&data);
     let mut positions: [(u32, u32); 10] = [(0, 0); 10];
 
-    let mut engine = Engine::new();
+    let mut engine = Engine::new(true);
     std::thread::sleep(std::time::Duration::from_secs(1));
     engine.run(data, &mut positions);
     let start = Instant::now();
