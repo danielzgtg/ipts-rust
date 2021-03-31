@@ -124,23 +124,11 @@ impl Pointers {
             }
 
             let mut new_p = new_pending.next(0);
+            let mut events_insert_iter = EventsInsertIter::new(&mut self.events);
             while new_p != 0 {
                 let new_i = new_p - 1;
                 let pos = new[new_i];
-                let (i, e) = self.events
-                    .iter_mut()
-                    .enumerate()
-                    .find(|x| match x.1 {
-                        Report::None | Report::Up => true,
-                        _ => false,
-                    })
-                    .unwrap();
-                *e = match e {
-                    Report::None => Report::Down(pos),
-                    Report::Up => Report::UpDown(pos),
-                    _ => unreachable!(),
-                };
-                mappings[new_i] = i;
+                mappings[new_i] = events_insert_iter.insert(pos);
                 new_p = new_pending.next(new_p);
             }
         }
@@ -156,6 +144,64 @@ impl Pointers {
 
     pub fn events_and_counter(&mut self) -> (&[Report; 10], &mut Counter) {
         (&self.events, &mut self.counter)
+    }
+}
+
+#[derive(Eq, PartialEq)]
+enum EventsInsertIterStage {
+    None,
+    Up,
+}
+
+impl EventsInsertIterStage {
+    fn advance(&mut self) {
+        *self = match *self {
+            EventsInsertIterStage::None => EventsInsertIterStage::Up,
+            _ => panic!(),
+        }
+    }
+}
+
+struct EventsInsertIter<'a> {
+    events: &'a mut [Report; 10],
+    head: usize,
+    stage: EventsInsertIterStage,
+}
+
+impl <'a> EventsInsertIter<'a> {
+    #[inline]
+    fn new(events: &'a mut [Report; 10]) -> EventsInsertIter<'a> {
+        EventsInsertIter {
+            events,
+            head: 0,
+            stage: EventsInsertIterStage::None,
+        }
+    }
+
+    fn advance_head(&mut self) {
+        self.head += 1;
+        if self.head == 10 {
+            self.head = 0;
+            self.stage.advance();
+        }
+    }
+
+    #[inline]
+    fn insert(&mut self, pos: (u32, u32)) -> usize {
+        while match self.events[self.head] {
+            Report::None => self.stage != EventsInsertIterStage::None,
+            Report::Up => self.stage != EventsInsertIterStage::Up,
+            _ => true,
+        } {
+            self.advance_head();
+        }
+        let result = self.head;
+        self.events[result] = match self.stage {
+            EventsInsertIterStage::None => Report::Down(pos),
+            EventsInsertIterStage::Up => Report::UpDown(pos),
+        };
+        self.advance_head();
+        result
     }
 }
 
