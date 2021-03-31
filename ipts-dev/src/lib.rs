@@ -78,6 +78,12 @@ impl Ipts {
         self.current_doorbell += 1;
     }
 
+    pub fn send_reset(self) {
+        let f = self.files[self.current_file()].try_clone().unwrap();
+        std::mem::drop(self);
+        ioctl::send_reset(&f);
+    }
+
     fn flush(&mut self) {
         for f in 0..IPTS_BUFFERS {
             self.inner_send_feedback(f)

@@ -36,7 +36,7 @@ use vulkano::swapchain::{AcquireError, ColorSpace, CompositeAlpha, FullscreenExc
 use vulkano::sync::{FlushError, GpuFuture, SharingMode};
 use vulkano_win::VkSurfaceBuild;
 use winit::dpi::PhysicalSize;
-use winit::event::{Event, WindowEvent};
+use winit::event::{Event, WindowEvent, VirtualKeyCode, ElementState};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
 
@@ -106,8 +106,9 @@ type MyPipelineLayout = Box<dyn PipelineLayoutAbstract + Send + Sync>;
 
 struct State {
     engine: Engine,
-    new_data: Arc<Mutex<[u8; 2816]>>,
     running: Arc<AtomicBool>,
+    new_data: Arc<Mutex<[u8; 2816]>>,
+    reset_sensor: Arc<AtomicBool>,
     join_handle: Option<JoinHandle<()>>,
     pointers: Pointers,
     positions: [(u32, u32); 10],
@@ -132,23 +133,38 @@ struct State {
     previous_frame_end: Option<Box<dyn GpuFuture>>,
 }
 
-fn background_thread(running: Arc<AtomicBool>, new_data: Arc<Mutex<[u8; 2816]>>) -> JoinHandle<()> {
-    let mut ipts = Ipts::new();
-    let mut buf = [0u8; 16384];
-
+fn background_thread(
+    running: Arc<AtomicBool>,
+    new_data: Arc<Mutex<[u8; 2816]>>,
+    reset_sensor: Arc<AtomicBool>,
+) -> JoinHandle<()> {
     let mut last_multitouch = Instant::now();
-    std::thread::spawn(move || while running.load(Ordering::Acquire) {
-        ipts.wait_for_doorbell(Instant::now() - last_multitouch < Duration::from_secs(1));
-        ipts.read(&mut buf);
+    std::thread::spawn(move || 'outer: loop {
+        let mut ipts = Ipts::new();
+        let mut buf = [0u8; 16384];
 
-        let parsed = HeaderAndBuffer::from(&buf);
-        if parsed.typ == 3 && parsed.size == 3500 && parsed.data[0] == 0x0B {
-            let data = get_heatmap((&parsed.data[..3500]).try_into().unwrap());
-            new_data.lock().unwrap().copy_from_slice(data);
-            last_multitouch = Instant::now();
+        loop {
+            ipts.wait_for_doorbell(Instant::now() - last_multitouch < Duration::from_secs(1));
+            ipts.read(&mut buf);
+
+            let parsed = HeaderAndBuffer::from(&buf);
+            if parsed.typ == 3 && parsed.size == 3500 && parsed.data[0] == 0x0B {
+                let data = get_heatmap((&parsed.data[..3500]).try_into().unwrap());
+                new_data.lock().unwrap().copy_from_slice(data);
+                last_multitouch = Instant::now();
+            }
+
+            ipts.send_feedback();
+
+            if reset_sensor.load(Ordering::Acquire) {
+                reset_sensor.store(false, Ordering::Release);
+                ipts.send_reset();
+                std::thread::sleep(Duration::from_secs(1));
+                break;
+            }
+
+            if !running.load(Ordering::Acquire) { break 'outer; };
         }
-
-        ipts.send_feedback();
     })
 }
 
@@ -178,9 +194,14 @@ fn get_new_viewport_uniforms(new_size: PhysicalSize<u32>) -> fs_heatmap::ty::VP 
 
 impl State {
     fn new(engine: Engine, event_loop: &EventLoop<()>) -> State {
-        let new_data = Arc::new(Mutex::new([0u8; 2816]));
         let running = Arc::new(AtomicBool::new(true));
-        let join_handle = Some(background_thread(running.clone(), new_data.clone()));
+        let new_data = Arc::new(Mutex::new([0u8; 2816]));
+        let reset_sensor = Arc::new(AtomicBool::new(false));
+        let join_handle = Some(background_thread(
+            running.clone(),
+            new_data.clone(),
+            reset_sensor.clone(),
+        ));
         let surface = WindowBuilder::new()
             .with_title("IPTS")
             .build_vk_surface(&event_loop, engine.vk()).unwrap();
@@ -270,8 +291,9 @@ impl State {
         create_framebuffers(&images, &renderpass, &mut dynamic_state, &mut framebuffers);
         State {
             engine,
-            new_data,
             running,
+            new_data,
+            reset_sensor,
             join_handle,
             pointers: Pointers::new(),
             positions: [(0, 0); 10],
@@ -451,17 +473,31 @@ fn main() {
                         state.cleanup();
                         *control_flow = ControlFlow::Exit
                     },
+                    WindowEvent::KeyboardInput {
+                        input,
+                        ..
+                    } => {
+                        if input.state == ElementState::Released {
+                            match input.virtual_keycode {
+                                Some(VirtualKeyCode::R) => {
+                                    println!("Reset");
+                                    state.reset_sensor.store(true, Ordering::Release);
+                                },
+                                _ => {},
+                            }
+                        }
+                    },
                     _ => {}
                 }
-            }
+            },
             Event::RedrawRequested(window_id) => {
                 assert_eq!(window_id, state.surface.window().id());
                 state.render();
-            }
+            },
             Event::MainEventsCleared => {
                 state.surface.window().request_redraw();
-            }
-            _ => {}
+            },
+            _ => {},
         }
     });
 }

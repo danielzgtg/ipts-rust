@@ -48,8 +48,8 @@ pub fn send_feedback(f: &File) {
     }
 }
 
-// pub fn send_reset(f: &File) {
-//     unsafe {
-//         raw::send_reset(f.as_raw_fd()).unwrap();
-//     }
-// }
+pub fn send_reset(f: &File) {
+    unsafe {
+        raw::send_reset(f.as_raw_fd()).unwrap();
+    }
+}
