@@ -191,7 +191,7 @@ impl Engine {
             dispatch!(self, builder, [1, 44, 1], s35);
             zero_buf!(self, builder, t);
             dispatch!(self, builder,
-                [1, 10, 1], s37,
+                [1, 1, 1], s37,
                 [1, 1, 1], s38,
             );
         });
