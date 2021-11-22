@@ -1,12 +1,11 @@
-use std::convert::TryInto;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
-use ipts_dev::{HeaderAndBuffer, Ipts};
-use mtinput::MtInput;
-use utils::{Pointers, get_heatmap};
 use engine_avx512::process_heatmap;
-use std::time::{Instant, Duration};
+use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
+use mtinput::MtInput;
+use utils::{get_heatmap, Pointers};
 
 fn main() {
     let running = Arc::new(AtomicBool::new(true));
@@ -14,7 +13,8 @@ fn main() {
 
     ctrlc::set_handler(move || {
         r.store(false, Ordering::Release);
-    }).unwrap();
+    })
+    .unwrap();
 
     let mut ipts = Ipts::new();
     let mut buf = [0u8; 16384];

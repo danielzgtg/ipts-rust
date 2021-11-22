@@ -2,9 +2,14 @@
 name = "ipts-dev"
 version = "0.1.0"
 authors = ["Daniel Tang <danielzgtg.opensource@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 nix = "0.20.0"
+
+[dependencies.tokio]
+version = "1.13"
+features = ["time"]
+optional = true

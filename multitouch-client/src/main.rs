@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use std::io::Write;
 use std::net::TcpStream;
 use std::sync::Arc;
@@ -6,7 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 use engine::Engine;
-use ipts_dev::{HeaderAndBuffer, Ipts};
+use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
 use utils::{get_heatmap, Pointers, serialize_reports};
 
 fn main() {

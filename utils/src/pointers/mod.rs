@@ -1,10 +1,10 @@
-pub use network::{deserialize_reports, serialize_reports};
 pub use pointers::Pointers;
 pub use report::{Counter, Report};
+pub use tcp::{deserialize_reports, serialize_reports};
 
-mod report;
-mod network;
 mod pointers;
+mod report;
+mod tcp;
 
 #[cfg(test)]
 mod tests;

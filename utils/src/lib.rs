@@ -1,5 +1,8 @@
 pub use heatmap::get_heatmap;
-pub use pointers::{Counter, Pointers, Report, serialize_reports, deserialize_reports};
+pub use pointers::{deserialize_reports, serialize_reports, Counter, Pointers, Report};
 
-mod pointers;
+pub const SCREEN_X: u16 = 2736;
+pub const SCREEN_Y: u16 = 1824;
+
 mod heatmap;
+mod pointers;

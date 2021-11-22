@@ -9,7 +9,7 @@ const DOWN_ID: u8 = 3;
 const MOVE_ID: u8 = 4;
 
 #[inline]
-fn serialize_report(report: Report, result: &mut[u8; 9]) {
+fn serialize_report(report: Report, result: &mut [u8; 9]) {
     let (id, pos) = match report {
         Report::None => (NONE_ID, (0, 0)),
         Report::Up => (UP_ID, (0, 0)),
@@ -38,7 +38,7 @@ fn deserialize_report(data: &[u8; 9], result: &mut Report) {
     }
 }
 
-pub fn serialize_reports(reports: &[Report; 10], result: &mut[u8; 98]) {
+pub fn serialize_reports(reports: &[Report; 10], result: &mut [u8; 98]) {
     result[0] = b'I';
     result[1] = b'P';
     result[2] = b'T';
@@ -60,9 +60,18 @@ pub fn serialize_reports(reports: &[Report; 10], result: &mut[u8; 98]) {
 }
 
 pub fn deserialize_reports(data: &[u8; 98], result: &mut [Report; 10]) {
-    if data[0] != b'I' || data[1] != b'I' || data[2] != b'I' || data[3] != b'I' ||
-        data[94] != b'I' || data[95] != b'I' || data[96] != b'I' || data[97] != b'I' {
+    if data[0] != b'I'
+        || data[1] != b'P'
+        || data[2] != b'T'
+        || data[3] != b'S'
+        || data[94] != b'I'
+        || data[95] != b'P'
+        || data[96] != b'T'
+        || data[97] != b'S'
+    {
+        // TODO return an error
         result.fill(Report::None);
+        return;
     }
     deserialize_report((&data[4..13]).try_into().unwrap(), &mut result[0]);
     deserialize_report((&data[13..22]).try_into().unwrap(), &mut result[1]);

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use ipts_dev::{HeaderAndBuffer, Ipts};
+use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
 
 fn main() {
     let running = Arc::new(AtomicBool::new(true));
