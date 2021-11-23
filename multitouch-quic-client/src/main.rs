@@ -1,6 +1,7 @@
+use std::process::exit;
+
 use multitouch_quic_client::run;
 use quic_common::IptsQuicConfig;
-use std::process::exit;
 
 fn main() -> ! {
     let rt = quic_common::tokio::runtime::Builder::new_current_thread()

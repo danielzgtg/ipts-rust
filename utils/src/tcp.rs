@@ -1,5 +1,6 @@
-use crate::Report;
 use byteorder::{BigEndian, ByteOrder};
+
+use crate::Report;
 
 const NONE_ID: u8 = 0;
 const UP_ID: u8 = 1;

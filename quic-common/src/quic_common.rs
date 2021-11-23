@@ -2,12 +2,13 @@ use std::fs::File;
 use std::io::BufReader;
 use std::time::Duration;
 
-use crate::DATAGRAM_SIZE;
 use futures_util::StreamExt;
 use quinn::{Datagrams, IncomingBiStreams, IncomingUniStreams, TransportConfig};
 use quinn_proto::{IdleTimeout, VarInt};
 use rustls::{Certificate, PrivateKey};
 use tokio::select;
+
+use crate::DATAGRAM_SIZE;
 
 pub fn load_certs(path: &'static str) -> (Vec<Certificate>, PrivateKey) {
     let f = File::open(path).expect("Failed to open pem");

@@ -1,7 +1,7 @@
+use std::io::Read;
 use std::net::TcpListener;
 
 use mtinput::MtInput;
-use std::io::Read;
 use utils::{deserialize_reports, Report};
 
 fn main() {

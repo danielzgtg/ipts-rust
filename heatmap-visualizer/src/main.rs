@@ -1,6 +1,7 @@
 use std::fs::{self, File};
 use std::io::BufWriter;
 use std::path::Path;
+
 use utils::get_heatmap;
 
 fn main() {

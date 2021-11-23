@@ -1,6 +1,6 @@
-use engine_avx512::process_heatmap;
 use std::time::{Duration, Instant};
 
+use engine_avx512::process_heatmap;
 use ipts_dev::{HeaderAndBuffer, IptsAsync, IptsExt};
 use quic_common::bytes::Bytes;
 use quic_common::futures_util::future::{select, Either};

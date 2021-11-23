@@ -1,9 +1,9 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
 use mtinput::MtInput;
-use std::time::{Duration, Instant};
 use utils::Pointers;
 
 fn main() {

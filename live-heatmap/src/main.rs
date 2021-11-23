@@ -14,9 +14,6 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use engine::Engine;
-use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
-use utils::{get_heatmap, Pointers, Report};
 use vulkano::buffer::{BufferAccess, BufferUsage, DeviceLocalBuffer, ImmutableBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState, SubpassContents};
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
@@ -43,6 +40,10 @@ use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, Event, VirtualKeyCode, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
+
+use engine::Engine;
+use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
+use utils::{get_heatmap, Pointers, Report};
 
 macro_rules! vs {
     ($id: ident, $path: expr) => {

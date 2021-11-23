@@ -1,6 +1,7 @@
-use engine_avx512::process_heatmap;
 use std::fs;
 use std::time::Instant;
+
+use engine_avx512::process_heatmap;
 use utils::get_heatmap;
 
 fn main() {

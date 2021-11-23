@@ -1,7 +1,7 @@
 use std::fs;
+use std::time::Instant;
 
 use engine::Engine;
-use std::time::Instant;
 use utils::get_heatmap;
 
 fn main() {

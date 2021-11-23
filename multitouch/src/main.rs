@@ -1,10 +1,10 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use engine::Engine;
 use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
 use mtinput::MtInput;
-use std::time::{Duration, Instant};
 use utils::{get_heatmap, Pointers};
 
 fn main() {

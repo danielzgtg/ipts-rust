@@ -6,6 +6,7 @@ use uinput::event::controller::Controller::Digi;
 use uinput::event::controller::Digi::Touch;
 use uinput::event::Event::{Absolute, Controller};
 use uinput::Device;
+
 use utils::{Report, SCREEN_X, SCREEN_Y};
 
 fn check_warn_libinput() {

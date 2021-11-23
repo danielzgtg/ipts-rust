@@ -1,6 +1,7 @@
+use std::time::Instant;
+
 use crate::Pointers;
 use crate::Report;
-use std::time::Instant;
 
 #[test]
 fn it_works() {
