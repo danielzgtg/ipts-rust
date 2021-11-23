@@ -18,6 +18,8 @@ webpki = "0.21.4"
 
 [dependencies.quinn]
 path = "../../quinn/quinn"
+default-features = false
+features = ["tls-rustls"]
 
 [dependencies.quinn-proto]
 path = "../../quinn/quinn-proto"

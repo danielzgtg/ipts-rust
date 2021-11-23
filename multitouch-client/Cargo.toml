@@ -17,3 +17,4 @@ path = "../ipts-dev"
 
 [dependencies.utils]
 path = "../utils"
+features = ["tcp"]

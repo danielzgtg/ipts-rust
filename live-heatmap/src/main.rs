@@ -9,7 +9,6 @@
 // according to those terms.
 // The above licenses shall only apply to the parts derived from that source
 
-use std::convert::TryInto;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;

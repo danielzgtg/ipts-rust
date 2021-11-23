@@ -1,7 +1,10 @@
-use crate::DATAGRAM_SIZE;
-use byteorder::{BigEndian, ByteOrder};
 use std::cmp::Ordering;
+
+use byteorder::{BigEndian, ByteOrder};
+
 use utils::{Report, SCREEN_X, SCREEN_Y};
+
+use crate::DATAGRAM_SIZE;
 
 /// Converts touch reports to and from unreliable unordered datagrams.
 /// The datagrams' integrity must be protected or else an error will be returned for misbehaviour.
@@ -67,9 +70,11 @@ impl ReportTransport {
     pub fn serialize(&self, datagram: &mut [u8; DATAGRAM_SIZE]) {
         BigEndian::write_u64(&mut datagram[..8], self.last_no);
 
+        #[inline]
         fn write_id(id: u64, result: &mut [u8; 8]) {
             BigEndian::write_u64(result, id);
         }
+        #[inline]
         fn write_position((x, y): (u32, u32), result: &mut [u8; 8]) {
             let x_result: &mut [u8; 4] = (&mut result[0..4]).try_into().unwrap();
             BigEndian::write_u32(x_result, x);
@@ -101,9 +106,11 @@ impl ReportTransport {
         let mut ids = [0u64; 10];
         let mut positions = [(0u32, 0u32); 10];
         {
+            #[inline]
             fn read_id(result: &[u8; 8]) -> u64 {
                 BigEndian::read_u64(result)
             }
+            #[inline]
             fn read_position(result: &[u8; 8]) -> (u32, u32) {
                 let x_result: &[u8; 4] = (&result[0..4]).try_into().unwrap();
                 let x = BigEndian::read_u32(x_result);
