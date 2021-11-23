@@ -9,9 +9,17 @@ edition = "2018"
 [dependencies]
 engine = { path = "../engine" }
 ipts-dev = { path = "../ipts-dev" }
-utils.path = "../utils"
-# TODO switch to 0.22.0 once my barrier PR is merged
-vulkano.path = "../../vulkano/vulkano"
-vulkano-shaders.path = "../../vulkano/vulkano-shaders"
-vulkano-win.path = "../../vulkano/vulkano-win"
 winit = "0.24.0"
+
+[dependencies.utils]
+path = "../utils"
+
+# TODO switch to 0.22.0 once my barrier PR is merged
+[dependencies.vulkano]
+path = "../../vulkano/vulkano"
+
+[dependencies.vulkano-shaders]
+path = "../../vulkano/vulkano-shaders"
+
+[dependencies.vulkano-win]
+path = "../../vulkano/vulkano-win"

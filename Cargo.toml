@@ -1,0 +1,23 @@
+[workspace]
+
+members = [
+    "dump-parser",
+    "engine",
+    "engine-avx512",
+    "heatmap-visualizer",
+    "ipts-dbg-rust",
+    "ipts-dev",
+    "live-heatmap",
+    "mtinput",
+    "mtserver",
+    "mtserver-quic",
+    "multitouch",
+    "multitouch-avx512",
+    "multitouch-client",
+    "multitouch-quic-client",
+    "quic-common",
+    "scroll-test",
+    "singletouch",
+    "utils",
+    "zoom-test",
+]

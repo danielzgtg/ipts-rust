@@ -6,8 +6,12 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-utils.path = "../utils"
+[dependencies.utils]
+path = "../utils"
+
 # TODO switch to 0.22.0 once my barrier PR is merged
-vulkano.path = "../../vulkano/vulkano"
-vulkano-shaders.path = "../../vulkano/vulkano-shaders"
+[dependencies.vulkano]
+path = "../../vulkano/vulkano"
+
+[dependencies.vulkano-shaders]
+path = "../../vulkano/vulkano-shaders"

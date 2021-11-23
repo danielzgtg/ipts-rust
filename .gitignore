@@ -1,8 +1,9 @@
-.idea
+/.idea
 *.iml
 /dbg.txt
 /heatmap.bin
 /ipts-quic.toml
+/target
 /client.pem
 /TODO_MOVE_CLIENT_AND_SERVER_TO_SUBDIR
 /server.pem
