@@ -33,6 +33,6 @@ fn main() {
         );
         parsed.print();
 
-        ipts.send_feedback()
+        ipts.send_feedback();
     }
 }
