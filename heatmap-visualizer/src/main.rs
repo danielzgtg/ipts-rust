@@ -17,5 +17,9 @@ fn main() {
     encoder.set_color(png::ColorType::Grayscale);
     encoder.set_depth(png::BitDepth::Eight);
     encoder.set_compression(png::Compression::Best);
-    encoder.write_header().unwrap().write_image_data(&data[..]).unwrap();
+    encoder
+        .write_header()
+        .unwrap()
+        .write_image_data(&data[..])
+        .unwrap();
 }

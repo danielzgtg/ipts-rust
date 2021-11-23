@@ -1,5 +1,5 @@
 pub use pointers::Pointers;
-pub use report::{Counter, Report};
+pub use report::Report;
 pub use tcp::{deserialize_reports, serialize_reports};
 
 mod pointers;

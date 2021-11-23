@@ -4,9 +4,11 @@ use std::time::{Duration, Instant};
 use ipts_dev::{HeaderAndBuffer, IptsAsync, IptsExt};
 use quic_common::bytes::Bytes;
 use quic_common::futures_util::future::{select, Either};
+use quic_common::quinn::crypto::rustls::HandshakeData;
 use quic_common::quinn::Connecting;
 use quic_common::quinn::{Endpoint, NewConnection};
 use quic_common::quinn_proto::VarInt;
+use quic_common::rustls::Certificate;
 use quic_common::tokio::pin;
 use quic_common::{unexpect_all, IptsQuicConfig, ReportTransport, DATAGRAM_SIZE};
 use utils::{get_heatmap, Pointers};
@@ -15,7 +17,7 @@ use crate::quic::new_client;
 
 fn connect(endpoint: &mut Endpoint, config: &'static IptsQuicConfig) -> Connecting {
     let server_dns_name = <dyn AsRef<str>>::as_ref(&config.server_dns_name);
-    let server_addr = &config.server_addr;
+    let server_addr = config.server_addr;
     println!("Connecting to {}", server_addr);
     endpoint
         .connect(server_addr, server_dns_name)
@@ -34,6 +36,7 @@ async fn handle(mut connection: Connecting, config: &'static IptsQuicConfig) {
             return;
         }
         Ok(x) => {
+            let x: HandshakeData = *x.downcast().unwrap();
             debug_assert!(x.server_name.is_none());
             if match x.protocol {
                 None => {
@@ -63,7 +66,15 @@ async fn handle(mut connection: Connecting, config: &'static IptsQuicConfig) {
         }
     };
     if quic_common::webpki::EndEntityCert::from(
-        &connection.peer_identity().unwrap().iter().next().unwrap().0,
+        &connection
+            .peer_identity()
+            .unwrap()
+            .downcast::<Vec<Certificate>>()
+            .unwrap()
+            .iter()
+            .next()
+            .unwrap()
+            .0,
     )
     .unwrap()
     .verify_is_valid_for_dns_name(config.server_dns_name.as_ref())

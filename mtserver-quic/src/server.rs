@@ -1,7 +1,9 @@
 use quic_common::futures_util::stream::FuturesUnordered;
 use quic_common::futures_util::StreamExt;
+use quic_common::quinn::crypto::rustls::HandshakeData;
 use quic_common::quinn::{Connecting, Incoming, NewConnection};
 use quic_common::quinn_proto::VarInt;
+use quic_common::rustls::Certificate;
 use quic_common::tokio::select;
 use quic_common::{unexpect_streams, IptsQuicConfig, DATAGRAM_SIZE};
 
@@ -22,6 +24,7 @@ async fn handle(
             return;
         }
         Ok(x) => {
+            let x: HandshakeData = *x.downcast().unwrap();
             if match x.server_name {
                 None => {
                     eprintln!("[{}] Missing SNI", id);
@@ -61,7 +64,7 @@ async fn handle(
         }
     };
     if {
-        let cert = connection.peer_identity().unwrap();
+        let cert: Vec<Certificate> = *connection.peer_identity().unwrap().downcast().unwrap();
         let cert = &cert.iter().next().unwrap().0;
         let cert = quic_common::webpki::EndEntityCert::from(cert).unwrap();
         config

@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 pub fn get_heatmap(input: &[u8; 3500]) -> &[u8; 2816] {
-    (&input[26..26+(44*64)]).try_into().unwrap()
+    (&input[26..26 + (44 * 64)]).try_into().unwrap()
 }
 
 #[cfg(test)]

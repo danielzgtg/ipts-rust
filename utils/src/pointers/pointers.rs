@@ -1,7 +1,6 @@
-use crate::{Counter, Report};
+use crate::Report;
 
 pub struct Pointers {
-    counter: Counter,
     positions: [(u32, u32); 10],
     positions_length: usize,
     mappings: [usize; 10],
@@ -13,7 +12,6 @@ const DETACH_THRESHOLD: u32 = 10000;
 impl Pointers {
     pub fn new() -> Pointers {
         Pointers {
-            counter: Counter::default(),
             positions: [(0, 0); 10],
             positions_length: 0,
             mappings: [0; 10],
@@ -40,9 +38,15 @@ impl Pointers {
                     let dist = point_dist(old[old_i], new);
                     distances[distance_i] = dist;
                     old_i != 0
-                } { old_i -= 1; distance_i -= 1; }
+                } {
+                    old_i -= 1;
+                    distance_i -= 1;
+                }
                 new_i != 0
-            } { new_i -= 1; distance_i -= 1; }
+            } {
+                new_i -= 1;
+                distance_i -= 1;
+            }
             distances
         };
 
@@ -55,12 +59,16 @@ impl Pointers {
             let mut min_old = 0;
 
             let mut new_p = new_pending.next(0);
-            if new_p == 0 { break 'stop; }
+            if new_p == 0 {
+                break 'stop;
+            }
             while {
                 let new_offset = (new_p - 1) * 10;
 
                 let mut old_p = old_pending.next(0);
-                if old_p == 0 { break 'stop; }
+                if old_p == 0 {
+                    break 'stop;
+                }
                 while {
                     let dist = distances[new_offset + old_p - 1];
                     if dist < min_dist {
@@ -78,7 +86,9 @@ impl Pointers {
             } {}
 
             debug_assert!(min_dist != u32::MAX);
-            if min_dist > DETACH_THRESHOLD { break; }
+            if min_dist > DETACH_THRESHOLD {
+                break;
+            }
 
             new_pending.remove(min_new);
             old_pending.remove(min_old);
@@ -114,7 +124,8 @@ impl Pointers {
             new[new_i] = pos;
             // TODO Further smooth out the jitter
             self.events[mapped] = Report::Move(pos);
-        } {}
+        }
+        {}
 
         {
             let mut old_p = old_pending.next(0);
@@ -127,7 +138,8 @@ impl Pointers {
             while new_p != 0 {
                 let new_i = new_p - 1;
                 let pos = new[new_i];
-                let (i, e) = self.events
+                let (i, e) = self
+                    .events
                     .iter_mut()
                     .enumerate()
                     .find(|x| match x.1 {
@@ -150,12 +162,8 @@ impl Pointers {
         self.mappings = mappings;
     }
 
-    pub fn events(&self) -> &[Report; 10] {
+    pub const fn events(&self) -> &[Report; 10] {
         &self.events
-    }
-
-    pub fn events_and_counter(&mut self) -> (&[Report; 10], &mut Counter) {
-        (&self.events, &mut self.counter)
     }
 }
 
@@ -166,11 +174,9 @@ struct Set10Iter {
 impl Set10Iter {
     #[inline]
     fn new(length: usize) -> Set10Iter {
-        let mut pending =  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0];
+        let mut pending = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0];
         pending[length] = 0;
-        Set10Iter {
-            pending,
-        }
+        Set10Iter { pending }
     }
 
     #[inline]
@@ -194,11 +200,7 @@ impl Set10Iter {
 
 #[inline]
 fn sq_diff(a: u32, b: u32) -> u32 {
-    let diff = if a < b {
-        b - a
-    } else {
-        a - b
-    };
+    let diff = if a < b { b - a } else { a - b };
     diff * diff
 }
 

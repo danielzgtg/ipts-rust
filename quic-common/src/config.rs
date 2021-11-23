@@ -21,7 +21,7 @@ pub struct IptsQuicConfig {
 impl IptsQuicConfig {
     pub fn load() -> Self {
         let db: SerializedConfig = toml::from_str(
-            &std::fs::read_to_string("../ipts-quic.toml").expect("Read ipts-quic.toml"),
+            &std::fs::read_to_string("ipts-quic.toml").expect("Read ipts-quic.toml"),
         )
         .expect("Parse ipts-quic.toml");
         assert_eq!(db.config_version, 1);

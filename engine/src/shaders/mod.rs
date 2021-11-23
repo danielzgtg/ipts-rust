@@ -14,7 +14,7 @@ macro_rules! cs {
             #[allow(dead_code)]
             const _ENSURE_VULKANO_RECOMPILES_CHANGES: &str = include_str!(concat!("../../", $path));
         }
-    }
+    };
 }
 
 cs!(s00, "src/shaders/0_0_unpack.glsl");
@@ -78,7 +78,7 @@ pub struct Pipelines {
 macro_rules! cs_init {
     ($device: expr, $shader: expr) => {
         Arc::new(
-            ComputePipeline::new($device.clone(), &$shader.main_entry_point(), &(), None).unwrap()
+            ComputePipeline::new($device.clone(), &$shader.main_entry_point(), &(), None).unwrap(),
         )
     };
 }

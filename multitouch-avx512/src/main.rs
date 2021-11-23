@@ -33,8 +33,7 @@ fn main() {
             let data = get_heatmap((&parsed.data[..3500]).try_into().unwrap());
             let length = process_heatmap(data, &mut positions);
             pointers.update(positions, length);
-            let (events, counter) = pointers.events_and_counter();
-            mt.dispatch(events, counter);
+            mt.dispatch(pointers.events());
             last_multitouch = Instant::now();
         }
 

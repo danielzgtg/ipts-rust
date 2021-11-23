@@ -6,7 +6,7 @@ use uinput::event::controller::Controller::Digi;
 use uinput::event::controller::Digi::Touch;
 use uinput::event::Event::{Absolute, Controller};
 use uinput::Device;
-use utils::{Counter, Report, SCREEN_X, SCREEN_Y};
+use utils::{Report, SCREEN_X, SCREEN_Y};
 
 fn check_warn_libinput() {
     if !Path::new("/usr/lib/xorg/modules/input/libinput_drv.so").exists() {
@@ -16,38 +16,38 @@ fn check_warn_libinput() {
 
 pub struct MtInput {
     device: Device,
+    next_id: i32,
 }
 
 impl MtInput {
     pub fn new() -> MtInput {
         check_warn_libinput();
-        MtInput {
-            device: uinput::default()
-                .unwrap()
-                .name("IPTS Touch")
-                .unwrap()
-                .event(Controller(Digi(Touch)))
-                .unwrap()
-                .event(Absolute(Multi(Slot)))
-                .unwrap()
-                .min(0)
-                .max(10)
-                .event(Absolute(Multi(TrackingId)))
-                .unwrap()
-                .event(Absolute(Multi(PositionX)))
-                .unwrap()
-                .min(0)
-                .max(SCREEN_X as i32)
-                .event(Absolute(Multi(PositionY)))
-                .unwrap()
-                .min(0)
-                .max(SCREEN_Y as i32)
-                .create()
-                .unwrap(),
-        }
+        let device = uinput::default()
+            .unwrap()
+            .name("IPTS Touch")
+            .unwrap()
+            .event(Controller(Digi(Touch)))
+            .unwrap()
+            .event(Absolute(Multi(Slot)))
+            .unwrap()
+            .min(0)
+            .max(10)
+            .event(Absolute(Multi(TrackingId)))
+            .unwrap()
+            .event(Absolute(Multi(PositionX)))
+            .unwrap()
+            .min(0)
+            .max(SCREEN_X as i32)
+            .event(Absolute(Multi(PositionY)))
+            .unwrap()
+            .min(0)
+            .max(SCREEN_Y as i32)
+            .create()
+            .unwrap();
+        MtInput { device, next_id: 0 }
     }
 
-    pub fn dispatch(&mut self, events: &[Report; 10], counter: &mut Counter) {
+    pub fn dispatch(&mut self, events: &[Report; 10]) {
         for (i, e) in events.iter().enumerate() {
             if *e == Report::None {
                 continue;
@@ -60,7 +60,12 @@ impl MtInput {
             match e {
                 Report::Down(_) | Report::UpDown(_) => {
                     self.device.press(&Touch).unwrap();
-                    self.device.send(TrackingId, counter.gen_id()).unwrap();
+                    self.device
+                        .send(TrackingId, {
+                            self.next_id += 1;
+                            self.next_id
+                        })
+                        .unwrap();
                 }
                 _ => {}
             }

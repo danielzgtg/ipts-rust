@@ -1,11 +1,11 @@
 use std::convert::TryInto;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
-use ipts_dev::{HeaderAndBuffer, Ipts};
+use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
 use mtinput::MtInput;
+use std::time::{Duration, Instant};
 use utils::Pointers;
-use std::time::{Instant, Duration};
 
 fn main() {
     let running = Arc::new(AtomicBool::new(true));
@@ -13,7 +13,8 @@ fn main() {
 
     ctrlc::set_handler(move || {
         r.store(false, Ordering::Release);
-    }).unwrap();
+    })
+    .unwrap();
 
     let mut ipts = Ipts::new();
     let mut buf = [0u8; 16384];
@@ -39,7 +40,7 @@ fn main() {
                 positions[0] = (x, y);
                 pointers.update(positions, 1);
             }
-            mt.dispatch(&mut pointers);
+            mt.dispatch(pointers.events());
             last_singletouch = Instant::now();
         }
 

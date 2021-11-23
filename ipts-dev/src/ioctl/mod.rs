@@ -7,9 +7,9 @@
  * Linux driver for Intel Precise Touch & Stylus
  */
 
+use crate::DeviceInfo;
 use std::fs::File;
 use std::os::unix::io::AsRawFd;
-use crate::DeviceInfo;
 
 mod raw;
 

@@ -1,9 +1,9 @@
 use std::convert::TryInto;
 use std::fs;
 
-use utils::get_heatmap;
 use engine::Engine;
 use std::time::Instant;
+use utils::get_heatmap;
 
 fn main() {
     let data = fs::read(r"../heatmap.bin").unwrap();

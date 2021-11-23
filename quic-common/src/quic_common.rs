@@ -5,6 +5,7 @@ use std::time::Duration;
 use crate::DATAGRAM_SIZE;
 use futures_util::StreamExt;
 use quinn::{Datagrams, IncomingBiStreams, IncomingUniStreams, TransportConfig};
+use quinn_proto::{IdleTimeout, VarInt};
 use rustls::{Certificate, PrivateKey};
 use tokio::select;
 
@@ -31,11 +32,11 @@ pub fn load_certs(path: &'static str) -> (Vec<Certificate>, PrivateKey) {
 
 pub fn new_transport_config<const SERVER: bool>() -> TransportConfig {
     let mut x = TransportConfig::default();
-    x.max_concurrent_bidi_streams(0).unwrap();
-    x.max_concurrent_uni_streams(0).unwrap();
-    x.max_idle_timeout(Some(Duration::from_secs(5))).unwrap();
-    x.stream_receive_window(0).unwrap();
-    x.receive_window(0).unwrap();
+    x.max_concurrent_bidi_streams(VarInt::from_u32(0));
+    x.max_concurrent_uni_streams(VarInt::from_u32(0));
+    x.max_idle_timeout(Some(IdleTimeout::try_from(Duration::from_secs(5)).unwrap()));
+    x.stream_receive_window(VarInt::from_u32(0));
+    x.receive_window(VarInt::from_u32(0));
     x.send_window(0);
     x.max_tlps(2);
     x.packet_threshold(10);
@@ -46,13 +47,29 @@ pub fn new_transport_config<const SERVER: bool>() -> TransportConfig {
     x.crypto_buffer_size(4096);
     x.allow_spin(false);
     if SERVER {
-        x.datagram_receive_buffer_size(Some(DATAGRAM_SIZE));
+        const DATAGRAM_OVERHEAD: usize = 9; // TODO ask quinn upstream to expose this
+        x.datagram_receive_buffer_size(Some(DATAGRAM_SIZE + DATAGRAM_OVERHEAD));
         x.datagram_send_buffer_size(0);
     } else {
         x.datagram_receive_buffer_size(None);
         x.datagram_send_buffer_size(DATAGRAM_SIZE);
     }
     x
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn config_client() {
+        let _ = new_transport_config::<false>();
+    }
+
+    #[test]
+    fn config_server() {
+        let _ = new_transport_config::<true>();
+    }
 }
 
 pub async fn unexpect_streams(mut uni: IncomingUniStreams, mut bi: IncomingBiStreams) {

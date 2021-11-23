@@ -27,21 +27,32 @@ pub struct Buffers {
 
 macro_rules! cpu_gpu_buffer {
     ($device: expr, $init: expr) => {
-        CpuAccessibleBuffer::from_data($device.clone(), BufferUsage {
-            transfer_source: true,
-            transfer_destination: true,
-            storage_buffer: true,
-            ..BufferUsage::none()
-        }, true, $init).unwrap()
+        CpuAccessibleBuffer::from_data(
+            $device.clone(),
+            BufferUsage {
+                transfer_source: true,
+                transfer_destination: true,
+                storage_buffer: true,
+                ..BufferUsage::none()
+            },
+            true,
+            $init,
+        )
+        .unwrap()
     };
 }
 
 macro_rules! gpu_buffer {
     ($device: expr, $family: expr) => {
-        DeviceLocalBuffer::new($device.clone(), BufferUsage {
-            storage_buffer: true,
-            ..BufferUsage::none()
-        }, std::iter::once($family)).unwrap()
+        DeviceLocalBuffer::new(
+            $device.clone(),
+            BufferUsage {
+                storage_buffer: true,
+                ..BufferUsage::none()
+            },
+            std::iter::once($family),
+        )
+        .unwrap()
     };
 }
 
@@ -53,11 +64,16 @@ impl Buffers {
             b: gpu_buffer!(device, family),
             c: gpu_buffer!(device, family),
             i: cpu_gpu_buffer!(device, [0u32; 10]),
-            t: DeviceLocalBuffer::new(device.clone(), BufferUsage {
-                transfer_destination: true,
-                storage_buffer: true,
-                ..BufferUsage::none()
-            }, std::iter::once(family)).unwrap(),
+            t: DeviceLocalBuffer::new(
+                device.clone(),
+                BufferUsage {
+                    transfer_destination: true,
+                    storage_buffer: true,
+                    ..BufferUsage::none()
+                },
+                std::iter::once(family),
+            )
+            .unwrap(),
             p: cpu_gpu_buffer!(device, [0u32; 10]),
         }
     }

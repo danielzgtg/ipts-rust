@@ -8,28 +8,24 @@ use mtinput::MtInput;
 use quic_common::tokio::sync::{Mutex, MutexGuard, Notify};
 use quic_common::tokio::time::sleep_until;
 use quic_common::{ReportTransport, DATAGRAM_SIZE};
-use utils::{Counter, Report};
+use utils::Report;
 
 struct MultiplexerBackend {
-    counter: Counter,
     mt: MtInput,
 }
 
 impl MultiplexerBackend {
     fn new() -> Self {
-        MultiplexerBackend {
-            counter: Counter::default(),
-            mt: MtInput::new(),
-        }
+        MultiplexerBackend { mt: MtInput::new() }
     }
 
     fn send(&mut self, events: &[Report; 10]) {
-        self.mt.dispatch(events, &mut self.counter);
+        self.mt.dispatch(events);
     }
 
     fn reset(&mut self) {
         const BLANK_EVENTS: [Report; 10] = [Report::None; 10];
-        self.mt.dispatch(&BLANK_EVENTS, &mut self.counter);
+        self.mt.dispatch(&BLANK_EVENTS);
     }
 }
 

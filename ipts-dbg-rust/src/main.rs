@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
 
@@ -9,7 +9,8 @@ fn main() {
 
     ctrlc::set_handler(move || {
         r.store(false, Ordering::Release);
-    }).unwrap();
+    })
+    .unwrap();
 
     let mut ipts = Ipts::new();
     let mut buf = [0u8; 16384];
@@ -26,8 +27,10 @@ fn main() {
         ipts.read(&mut buf);
 
         let parsed = HeaderAndBuffer::from(&buf);
-        println!("====== Buffer: {} == Type: {} == Size: {} ======",
-                 parsed.buffer, parsed.typ, parsed.size);
+        println!(
+            "====== Buffer: {} == Type: {} == Size: {} ======",
+            parsed.buffer, parsed.typ, parsed.size
+        );
         parsed.print();
 
         ipts.send_feedback()

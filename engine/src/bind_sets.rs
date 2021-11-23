@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
+use vulkano::descriptor::descriptor_set::{
+    PersistentDescriptorSet, PersistentDescriptorSetBuf, StdDescriptorPoolAlloc,
+};
 use vulkano::descriptor::PipelineLayoutAbstract;
-use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet, StdDescriptorPoolAlloc, PersistentDescriptorSetBuf};
 
 use crate::buffers::*;
 use crate::shaders::Pipelines;
@@ -18,17 +20,27 @@ macro_rules! bind_set {
     };
 }
 
-type BindSet2<A, B> = Arc<PersistentDescriptorSet<
-    (((),
-      PersistentDescriptorSetBuf<A>),
-     PersistentDescriptorSetBuf<B>),
-    StdDescriptorPoolAlloc>>;
-type BindSet3<A, B, C> = Arc<PersistentDescriptorSet<
-    ((((),
-       PersistentDescriptorSetBuf<A>),
-      PersistentDescriptorSetBuf<B>),
-     PersistentDescriptorSetBuf<C>),
-    StdDescriptorPoolAlloc>>;
+type BindSet2<A, B> = Arc<
+    PersistentDescriptorSet<
+        (
+            ((), PersistentDescriptorSetBuf<A>),
+            PersistentDescriptorSetBuf<B>,
+        ),
+        StdDescriptorPoolAlloc,
+    >,
+>;
+type BindSet3<A, B, C> = Arc<
+    PersistentDescriptorSet<
+        (
+            (
+                ((), PersistentDescriptorSetBuf<A>),
+                PersistentDescriptorSetBuf<B>,
+            ),
+            PersistentDescriptorSetBuf<C>,
+        ),
+        StdDescriptorPoolAlloc,
+    >,
+>;
 
 pub struct BindSets {
     pub s00: BindSet2<BufferR, BufferA>,
@@ -61,5 +73,3 @@ impl BindSets {
         }
     }
 }
-
-

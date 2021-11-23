@@ -11,6 +11,6 @@ fn main() {
         positions[0] = (1000, 600 - y);
         positions[1] = (1000, 700 + y);
         pointers.update(positions, 2);
-        mt.dispatch(&mut pointers);
+        mt.dispatch(pointers.events());
     }
 }

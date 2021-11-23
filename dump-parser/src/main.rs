@@ -3,10 +3,12 @@ use std::fs;
 fn main() {
     let txt = fs::read_to_string(r"../dbg.txt").unwrap();
     let mut result = Vec::with_capacity(3500);
-    for line in txt.lines()
+    for line in txt
+        .lines()
         .skip_while(|x| !x.starts_with('=') || !x.contains("Size: 3500"))
         .skip(1)
-        .take_while(|x| !x.is_empty()) {
+        .take_while(|x| !x.is_empty())
+    {
         for hex in line.trim_end().split(' ').map(|x| x.as_bytes()) {
             result.push(parse_hex(hex));
         }

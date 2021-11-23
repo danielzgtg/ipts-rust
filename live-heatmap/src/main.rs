@@ -10,33 +10,38 @@
 // The above licenses shall only apply to the parts derived from that source
 
 use std::convert::TryInto;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use engine::Engine;
-use ipts_dev::{HeaderAndBuffer, Ipts};
+use ipts_dev::{HeaderAndBuffer, Ipts, IptsExt};
 use utils::{get_heatmap, Pointers, Report};
 use vulkano::buffer::{BufferAccess, BufferUsage, DeviceLocalBuffer, ImmutableBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState, SubpassContents};
-use vulkano::descriptor::{DescriptorSet, PipelineLayoutAbstract};
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
+use vulkano::descriptor::{DescriptorSet, PipelineLayoutAbstract};
 use vulkano::device::Device;
 use vulkano::format::Format;
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass};
-use vulkano::image::{ImageUsage, SwapchainImage};
 use vulkano::image::view::ImageView;
+use vulkano::image::{ImageUsage, SwapchainImage};
 use vulkano::impl_vertex;
-use vulkano::pipeline::GraphicsPipeline;
-use vulkano::pipeline::vertex::{BufferlessDefinition, BufferlessVertices, OneVertexOneInstanceDefinition};
+use vulkano::pipeline::vertex::{
+    BufferlessDefinition, BufferlessVertices, OneVertexOneInstanceDefinition,
+};
 use vulkano::pipeline::viewport::Viewport;
+use vulkano::pipeline::GraphicsPipeline;
 use vulkano::single_pass_renderpass;
-use vulkano::swapchain::{AcquireError, ColorSpace, CompositeAlpha, FullscreenExclusive, PresentMode, Surface, SurfaceTransform, Swapchain, SwapchainAcquireFuture, SwapchainCreationError};
+use vulkano::swapchain::{
+    AcquireError, ColorSpace, CompositeAlpha, FullscreenExclusive, PresentMode, Surface,
+    SurfaceTransform, Swapchain, SwapchainAcquireFuture, SwapchainCreationError,
+};
 use vulkano::sync::{FlushError, GpuFuture, SharingMode};
 use vulkano_win::VkSurfaceBuild;
 use winit::dpi::PhysicalSize;
-use winit::event::{Event, WindowEvent, VirtualKeyCode, ElementState};
+use winit::event::{ElementState, Event, VirtualKeyCode, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
 
@@ -50,7 +55,7 @@ macro_rules! vs {
             #[allow(dead_code)]
             const _ENSURE_VULKANO_RECOMPILES_CHANGES: &str = include_str!(concat!("../", $path));
         }
-    }
+    };
 }
 
 macro_rules! fs {
@@ -63,7 +68,7 @@ macro_rules! fs {
             #[allow(dead_code)]
             const _ENSURE_VULKANO_RECOMPILES_CHANGES: &str = include_str!(concat!("../", $path));
         }
-    }
+    };
 }
 
 vs!(vs_cursor, "src/shaders/vs_cursor.glsl");
@@ -119,11 +124,13 @@ struct State {
     pipeline: Arc<GraphicsPipeline<BufferlessDefinition, MyPipelineLayout, MyRenderPass>>,
     viewport_uniforms: Arc<DeviceLocalBuffer<fs_heatmap::ty::VP>>,
     new_viewport_uniforms: Option<fs_heatmap::ty::VP>,
-    cursor_pipeline: Arc<GraphicsPipeline<
-        OneVertexOneInstanceDefinition<Vertex, Instance>,
-        MyPipelineLayout,
-        MyRenderPass,
-    >>,
+    cursor_pipeline: Arc<
+        GraphicsPipeline<
+            OneVertexOneInstanceDefinition<Vertex, Instance>,
+            MyPipelineLayout,
+            MyRenderPass,
+        >,
+    >,
     vertex_positions: Arc<ImmutableBuffer<[Vertex; 4]>>,
     instance_positions: Arc<DeviceLocalBuffer<[Instance; 10]>>,
     new_instance_positions: Option<[Instance; 10]>,
@@ -163,7 +170,9 @@ fn background_thread(
                 break;
             }
 
-            if !running.load(Ordering::Acquire) { break 'outer; };
+            if !running.load(Ordering::Acquire) {
+                break 'outer;
+            };
         }
     })
 }
@@ -180,9 +189,13 @@ fn create_framebuffers(
         [dimensions[0] as f32, dimensions[1] as f32]
     };
     for image in images.iter() {
-        result.push(Arc::new(Framebuffer::start(renderpass.clone())
-            .add(ImageView::new(image.clone()).unwrap()).unwrap()
-            .build().unwrap()));
+        result.push(Arc::new(
+            Framebuffer::start(renderpass.clone())
+                .add(ImageView::new(image.clone()).unwrap())
+                .unwrap()
+                .build()
+                .unwrap(),
+        ));
     }
 }
 
@@ -204,80 +217,129 @@ impl State {
         ));
         let surface = WindowBuilder::new()
             .with_title("IPTS")
-            .build_vk_surface(&event_loop, engine.vk()).unwrap();
+            .build_vk_surface(&event_loop, engine.vk())
+            .unwrap();
         let shaders = Shaders::new(&engine.device());
-        let (swapchain, images) =
-            Swapchain::new(
-                engine.device(), surface.clone(),
-                3, Format::B8G8R8A8Srgb, surface.window().inner_size().into(), 1,
-                ImageUsage {
-                    transfer_destination: true,
-                    color_attachment: true,
-                    ..ImageUsage::none()
-                }, SharingMode::Exclusive, SurfaceTransform::Identity,
-                CompositeAlpha::Opaque, PresentMode::Fifo,
-                FullscreenExclusive::Default,
-                true, ColorSpace::SrgbNonLinear,
-            ).unwrap();
-        let renderpass: Arc<dyn RenderPassAbstract + Send + Sync> = Arc::new(single_pass_renderpass!(
+        let (swapchain, images) = Swapchain::new(
             engine.device(),
-            attachments: {
-                color: {
-                    load: Clear,
-                    store: Store,
-                    format: Format::B8G8R8A8Srgb,
-                    samples: 1,
-                }
+            surface.clone(),
+            3,
+            Format::B8G8R8A8Srgb,
+            surface.window().inner_size().into(),
+            1,
+            ImageUsage {
+                transfer_destination: true,
+                color_attachment: true,
+                ..ImageUsage::none()
             },
-            pass: {
-                color: [color],
-                depth_stencil: {}
-            }
-        ).unwrap());
-        let pipeline = Arc::new(GraphicsPipeline::start()
-            .viewports_dynamic_scissors_irrelevant(1)
-            .vertex_shader(shaders.vs_fullscreen.main_entry_point(), ())
-            .fragment_shader(shaders.fs_heatmap.main_entry_point(), ())
-            .render_pass(Subpass::from(renderpass.clone(), 0).unwrap())
-            .build(engine.device()).unwrap());
-        let viewport_uniforms = DeviceLocalBuffer::new(engine.device(), BufferUsage {
-            transfer_destination: true,
-            uniform_buffer: true,
-            ..BufferUsage::none()
-        }, std::iter::once(engine.queue().family())).unwrap();
-        let new_viewport_uniforms = Some(get_new_viewport_uniforms(surface.window().inner_size()));
-        let cursor_pipeline = Arc::new(GraphicsPipeline::start()
-            .viewports_dynamic_scissors_irrelevant(1)
-            .triangle_strip()
-            .vertex_input(OneVertexOneInstanceDefinition::<Vertex, Instance>::new())
-            .vertex_shader(shaders.vs_cursor.main_entry_point(), ())
-            .fragment_shader(shaders.fs_cursor.main_entry_point(), ())
-            .blend_alpha_blending()
-            .render_pass(Subpass::from(renderpass.clone(), 0).unwrap())
-            .build(engine.device()).unwrap()
+            SharingMode::Exclusive,
+            SurfaceTransform::Identity,
+            CompositeAlpha::Opaque,
+            PresentMode::Fifo,
+            FullscreenExclusive::Default,
+            true,
+            ColorSpace::SrgbNonLinear,
+        )
+        .unwrap();
+        let renderpass: Arc<dyn RenderPassAbstract + Send + Sync> = Arc::new(
+            single_pass_renderpass!(
+                engine.device(),
+                attachments: {
+                    color: {
+                        load: Clear,
+                        store: Store,
+                        format: Format::B8G8R8A8Srgb,
+                        samples: 1,
+                    }
+                },
+                pass: {
+                    color: [color],
+                    depth_stencil: {}
+                }
+            )
+            .unwrap(),
         );
-        let (vertex_positions, future) = ImmutableBuffer::from_data([
-                Vertex { vertex_position: [-0.1, 0.1] },
-                Vertex { vertex_position: [-0.1, -0.1] },
-                Vertex { vertex_position: [0.1, 0.1] },
-                Vertex { vertex_position: [0.1, -0.1] },
-            ], BufferUsage {
-            transfer_destination: true,
-            vertex_buffer: true,
-            ..BufferUsage::none()
-        }, engine.queue()).unwrap();
-        future.then_signal_fence_and_flush().unwrap().wait(None).unwrap();
-        let instance_positions = DeviceLocalBuffer::new(engine.device(), BufferUsage {
-            transfer_destination: true,
-            vertex_buffer: true,
-            ..BufferUsage::none()
-        }, std::iter::once(engine.queue().family())).unwrap();
+        let pipeline = Arc::new(
+            GraphicsPipeline::start()
+                .viewports_dynamic_scissors_irrelevant(1)
+                .vertex_shader(shaders.vs_fullscreen.main_entry_point(), ())
+                .fragment_shader(shaders.fs_heatmap.main_entry_point(), ())
+                .render_pass(Subpass::from(renderpass.clone(), 0).unwrap())
+                .build(engine.device())
+                .unwrap(),
+        );
+        let viewport_uniforms = DeviceLocalBuffer::new(
+            engine.device(),
+            BufferUsage {
+                transfer_destination: true,
+                uniform_buffer: true,
+                ..BufferUsage::none()
+            },
+            std::iter::once(engine.queue().family()),
+        )
+        .unwrap();
+        let new_viewport_uniforms = Some(get_new_viewport_uniforms(surface.window().inner_size()));
+        let cursor_pipeline = Arc::new(
+            GraphicsPipeline::start()
+                .viewports_dynamic_scissors_irrelevant(1)
+                .triangle_strip()
+                .vertex_input(OneVertexOneInstanceDefinition::<Vertex, Instance>::new())
+                .vertex_shader(shaders.vs_cursor.main_entry_point(), ())
+                .fragment_shader(shaders.fs_cursor.main_entry_point(), ())
+                .blend_alpha_blending()
+                .render_pass(Subpass::from(renderpass.clone(), 0).unwrap())
+                .build(engine.device())
+                .unwrap(),
+        );
+        let (vertex_positions, future) = ImmutableBuffer::from_data(
+            [
+                Vertex {
+                    vertex_position: [-0.1, 0.1],
+                },
+                Vertex {
+                    vertex_position: [-0.1, -0.1],
+                },
+                Vertex {
+                    vertex_position: [0.1, 0.1],
+                },
+                Vertex {
+                    vertex_position: [0.1, -0.1],
+                },
+            ],
+            BufferUsage {
+                transfer_destination: true,
+                vertex_buffer: true,
+                ..BufferUsage::none()
+            },
+            engine.queue(),
+        )
+        .unwrap();
+        future
+            .then_signal_fence_and_flush()
+            .unwrap()
+            .wait(None)
+            .unwrap();
+        let instance_positions = DeviceLocalBuffer::new(
+            engine.device(),
+            BufferUsage {
+                transfer_destination: true,
+                vertex_buffer: true,
+                ..BufferUsage::none()
+            },
+            std::iter::once(engine.queue().family()),
+        )
+        .unwrap();
         let new_instance_positions = None;
-        let descriptor_set = Arc::new(PersistentDescriptorSet::start(
-            pipeline.layout().descriptor_set_layout(0).unwrap().clone())
-            .add_buffer(engine.get_parsed_buffer()).unwrap()
-            .add_buffer(viewport_uniforms.clone()).unwrap()
-            .build().unwrap()
+        let descriptor_set = Arc::new(
+            PersistentDescriptorSet::start(
+                pipeline.layout().descriptor_set_layout(0).unwrap().clone(),
+            )
+            .add_buffer(engine.get_parsed_buffer())
+            .unwrap()
+            .add_buffer(viewport_uniforms.clone())
+            .unwrap()
+            .build()
+            .unwrap(),
         );
         let mut dynamic_state = DynamicState {
             viewports: Some(vec![Viewport {
@@ -327,12 +389,11 @@ impl State {
     }
 
     fn resize(&mut self, new_size: PhysicalSize<u32>) -> bool {
-        let (swapchain, images) =
-            match self.swapchain.recreate_with_dimensions(new_size.into()) {
-                Ok(x) => x,
-                Err(SwapchainCreationError::UnsupportedDimensions) => return false,
-                Err(x) => panic!("{:?}", x),
-            };
+        let (swapchain, images) = match self.swapchain.recreate_with_dimensions(new_size.into()) {
+            Ok(x) => x,
+            Err(SwapchainCreationError::UnsupportedDimensions) => return false,
+            Err(x) => panic!("{:?}", x),
+        };
         create_framebuffers(
             &images,
             &self.renderpass,
@@ -351,7 +412,9 @@ impl State {
         let (i, future): (usize, SwapchainAcquireFuture<Window>) = loop {
             match vulkano::swapchain::acquire_next_image(self.swapchain.clone(), None) {
                 Ok((id, suboptimal, future)) => {
-                    if !suboptimal { break (id, future); }
+                    if !suboptimal {
+                        break (id, future);
+                    }
                 }
                 Err(AcquireError::OutOfDate) => {}
                 Err(x) => panic!("{:?}", x),
@@ -364,11 +427,15 @@ impl State {
         std::mem::drop(data);
         self.pointers.update(self.positions, self.positions_length);
         let mut instances = [Instance::default(); 10];
-        for ((i, x, y), instance) in self.pointers.events().iter()
+        for ((i, x, y), instance) in self
+            .pointers
+            .events()
+            .iter()
             .enumerate()
             .filter_map(|(i, report)| match report {
-                Report::UpDown((x, y)) | Report::Down((x, y)) | Report::Move((x, y)) =>
-                    Some((i, x, y)),
+                Report::UpDown((x, y)) | Report::Down((x, y)) | Report::Move((x, y)) => {
+                    Some((i, x, y))
+                }
                 _ => None,
             })
             .zip(instances.iter_mut())
@@ -383,24 +450,31 @@ impl State {
             let mut builder = AutoCommandBufferBuilder::primary_one_time_submit(
                 self.engine.device(),
                 self.engine.queue().family(),
-            ).unwrap();
+            )
+            .unwrap();
             if let Some(new_viewport_uniforms) = &self.new_viewport_uniforms {
-                builder.update_buffer(
-                    self.viewport_uniforms.clone(),
-                    Box::new(*new_viewport_uniforms),
-                ).unwrap();
+                builder
+                    .update_buffer(
+                        self.viewport_uniforms.clone(),
+                        Box::new(*new_viewport_uniforms),
+                    )
+                    .unwrap();
             }
             if let Some(new_instance_positions) = &mut self.new_instance_positions {
-                builder.update_buffer(
-                    self.instance_positions.clone(),
-                    Box::new(new_instance_positions.clone()),
-                ).unwrap();
+                builder
+                    .update_buffer(
+                        self.instance_positions.clone(),
+                        Box::new(new_instance_positions.clone()),
+                    )
+                    .unwrap();
             }
-            builder.begin_render_pass(
-                self.framebuffers[i].clone(),
-                SubpassContents::Inline,
-                vec![[0.0, 0.0, 1.0, 1.0].into()],
-            ).unwrap()
+            builder
+                .begin_render_pass(
+                    self.framebuffers[i].clone(),
+                    SubpassContents::Inline,
+                    vec![[0.0, 0.0, 1.0, 1.0].into()],
+                )
+                .unwrap()
                 .draw(
                     self.pipeline.clone(),
                     &self.dynamic_state,
@@ -411,27 +485,36 @@ impl State {
                     self.descriptor_set.clone(),
                     (),
                     std::iter::empty(),
-                ).unwrap()
+                )
+                .unwrap()
                 .draw(
                     self.cursor_pipeline.clone(),
                     &self.dynamic_state,
                     (
                         [self.vertex_positions.clone()],
-                        self.instance_positions.clone()
-                            .into_buffer_slice().slice(0..self.positions_length).unwrap(),
+                        self.instance_positions
+                            .clone()
+                            .into_buffer_slice()
+                            .slice(0..self.positions_length)
+                            .unwrap(),
                     ),
                     (),
                     (),
                     std::iter::empty(),
-                ).unwrap()
-                .end_render_pass().unwrap();
+                )
+                .unwrap()
+                .end_render_pass()
+                .unwrap();
             builder.build().unwrap()
         };
 
-        let frame_end = self.previous_frame_end
-            .take().unwrap_or_else(|| vulkano::sync::now(self.engine.device()).boxed())
+        let frame_end = self
+            .previous_frame_end
+            .take()
+            .unwrap_or_else(|| vulkano::sync::now(self.engine.device()).boxed())
             .join(future)
-            .then_execute(self.engine.queue(), cmd).unwrap()
+            .then_execute(self.engine.queue(), cmd)
+            .unwrap()
             .then_swapchain_present(self.engine.queue(), self.swapchain.clone(), i)
             .then_signal_fence_and_flush();
         self.previous_frame_end = match frame_end {
@@ -458,46 +541,39 @@ fn main() {
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
         match event {
-            Event::WindowEvent {
-                window_id,
-                event,
-            } => {
+            Event::WindowEvent { window_id, event } => {
                 assert_eq!(window_id, state.surface.window().id());
                 match event {
                     WindowEvent::Resized(size) => state.resize_loop(size),
-                    WindowEvent::ScaleFactorChanged {
-                        new_inner_size,
-                        ..
-                    } => state.resize_loop(*new_inner_size),
+                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        state.resize_loop(*new_inner_size)
+                    }
                     WindowEvent::CloseRequested => {
                         state.cleanup();
                         *control_flow = ControlFlow::Exit
-                    },
-                    WindowEvent::KeyboardInput {
-                        input,
-                        ..
-                    } => {
+                    }
+                    WindowEvent::KeyboardInput { input, .. } => {
                         if input.state == ElementState::Released {
                             match input.virtual_keycode {
                                 Some(VirtualKeyCode::R) => {
                                     println!("Reset");
                                     state.reset_sensor.store(true, Ordering::Release);
-                                },
-                                _ => {},
+                                }
+                                _ => {}
                             }
                         }
-                    },
+                    }
                     _ => {}
                 }
-            },
+            }
             Event::RedrawRequested(window_id) => {
                 assert_eq!(window_id, state.surface.window().id());
                 state.render();
-            },
+            }
             Event::MainEventsCleared => {
                 state.surface.window().request_redraw();
-            },
-            _ => {},
+            }
+            _ => {}
         }
     });
 }
