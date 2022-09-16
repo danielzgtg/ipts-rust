@@ -1,0 +1,12 @@
+[Unit]
+Description=Ipts-rust multitouch
+After=dev-ipts-0.device
+Wants=dev-ipts-0.device
+
+[Service]
+Type=simple
+ExecStart=/root/multitouch
+TimeoutStopSec=1
+
+[Install]
+WantedBy=multi-user.target

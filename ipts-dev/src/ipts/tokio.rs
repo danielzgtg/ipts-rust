@@ -18,7 +18,7 @@ impl IptsAsync {
     }
 
     pub async fn send_feedback(&mut self) {
-        // Async safe: This has to be just setting a flag somewhere
+        // Async safe: This has to be just setting a flag in the kernel
         self.wait_for_device().await;
         self.0.send_feedback_impl(self.0.current_file());
     }

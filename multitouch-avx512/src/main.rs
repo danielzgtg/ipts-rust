@@ -24,8 +24,13 @@ fn main() {
     let mut positions: [(u32, u32); 10] = [(0, 0); 10];
 
     let mut last_multitouch = Instant::now();
-    while running.load(Ordering::Acquire) {
-        ipts.wait_for_doorbell(Instant::now() - last_multitouch < Duration::from_secs(1));
+    while {
+        running.load(Ordering::Acquire)
+            && ipts.wait_for_doorbell_until(
+                Instant::now() - last_multitouch < Duration::from_secs(1),
+                &running,
+            )
+    } {
         ipts.read(&mut buf);
 
         let parsed = HeaderAndBuffer::from(&buf);

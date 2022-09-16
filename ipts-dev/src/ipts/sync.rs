@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use crate::ipts::ext::IptsAccess;
 use crate::ipts::inner::IptsImpl;
 
@@ -14,13 +16,22 @@ impl Ipts {
     }
 
     pub fn wait_for_doorbell(&mut self, eager: bool) {
+        let running = AtomicBool::new(true); // dummy
+        self.wait_for_doorbell_until(eager, &running);
+    }
+
+    pub fn wait_for_doorbell_until(&mut self, eager: bool, running: &AtomicBool) -> bool {
         self.0.begin_wait_for_doorbell(eager);
         while let Some(duration) = {
             let doorbell = self.0.doorbell_sync();
             self.0.keep_waiting_for_doorbell(doorbell)
         } {
             std::thread::sleep(duration);
+            if !running.load(Ordering::Acquire) {
+                return false;
+            }
         }
+        return true;
     }
 }
 
